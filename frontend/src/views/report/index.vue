@@ -47,6 +47,7 @@
             >
               {{ action }}
             </button>
+            <button class="link" type="button" @click="buildBudgetAttachment(row)">科目对账附件</button>
           </td>
         </tr>
         <tr v-if="!rows.length">
@@ -107,6 +108,22 @@ async function runAction(action: string, row: Row) {
     await reload()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '经营分析报告操作失败'
+  }
+}
+
+async function buildBudgetAttachment(row: Row) {
+  errorMessage.value = ''
+  try {
+    const response = await request(`${ENDPOINT}/${row.id}/budget-attachment`, { method: 'POST' })
+    const payload = await response.json()
+    if (!response.ok || payload.ok === false) {
+      throw new Error(payload.message || '科目对账附件生成失败')
+    }
+    errorMessage.value = ''
+    await reload()
+    window.alert(payload.message)
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '科目对账附件生成失败'
   }
 }
 

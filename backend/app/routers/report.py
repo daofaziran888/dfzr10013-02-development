@@ -39,6 +39,18 @@ def get_entry(entry_id: int) -> dict:
     return entry
 
 
+@router.post("/{entry_id}/budget-attachment", response_model=ActionResult)
+def build_budget_attachment(
+    entry_id: int,
+    basis_id: int | None = Query(default=None, description="核算依据 id，缺省取最新；旧报告应传历史依据 id"),
+) -> ActionResult:
+    """跨模块生成科目对账附件：消费预算执行差异数据集并绑定到报告。"""
+    attachment, message = service.build_budget_attachment(entry_id, basis_id=basis_id)
+    if attachment is None:
+        return ActionResult(ok=False, message=message)
+    return ActionResult(ok=True, message=f"科目对账附件 {attachment['附件编号']} 已绑定报告", entry=attachment)
+
+
 @router.post("", response_model=ActionResult)
 def create_entry(payload: EntryPayload) -> ActionResult:
     """登记一条分析报告，缺字段时说明原因而不是静默丢弃。"""

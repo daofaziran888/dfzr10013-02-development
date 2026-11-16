@@ -14,6 +14,12 @@ from app.store import store
 
 app = FastAPI(title="企业经营分析决策平台", version="1.0.0")
 
+
+@app.on_event("startup")
+def load_budget_seed() -> None:
+    """启动时加载预算核算种子：费用分摊、冲销与首轮核算一次就绪。"""
+    store.load_budget_seed()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,

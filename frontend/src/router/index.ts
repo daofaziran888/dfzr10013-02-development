@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Overview from '@/views/Overview.vue'
 const Kpi = () => import('@/views/kpi/index.vue')
 const Finance = () => import('@/views/finance/index.vue')
+const Budget = () => import('@/views/budget/index.vue')
 const Sales = () => import('@/views/sales/index.vue')
 const Customer = () => import('@/views/customer/index.vue')
 const Supply = () => import('@/views/supply/index.vue')
@@ -24,6 +25,7 @@ const router = createRouter({
     { path: '/', name: 'overview', component: Overview },
     { path: '/kpi', name: 'kpi', component: Kpi },
     { path: '/finance', name: 'finance', component: Finance },
+    { path: '/finance/budget', name: 'budget', component: Budget },
     { path: '/sales', name: 'sales', component: Sales },
     { path: '/customer', name: 'customer', component: Customer },
     { path: '/supply', name: 'supply', component: Supply },

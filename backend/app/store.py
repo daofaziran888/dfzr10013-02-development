@@ -14,6 +14,39 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        # 预算核算表先建空仓，种子在应用启动时经服务层流程加载（见 load_budget_seed），
+        # 避免在模块初始化阶段与服务层形成循环导入。
+        from app.services.budget_constants import ALL_TABLES
+
+        for name in ALL_TABLES:
+            self._tables.setdefault(name, [])
+        self._budget_seed_loaded = False
+
+    def load_budget_seed(self) -> None:
+        """启动阶段构建预算核算种子数据；重复调用不会重复分摊或重复入账。"""
+        if self._budget_seed_loaded:
+            return
+        from app.budget_seed import build_budget_seed
+        from app.services.budget import BudgetService
+        from app.services.budget_constants import ALL_TABLES
+
+        seed_tables = build_budget_seed(BudgetService())
+        for name in ALL_TABLES:
+            self._tables[name] = seed_tables[name]
+        self._budget_seed_loaded = True
+
+    def reset_budget_tables(self) -> None:
+        """清空预算核算表并重新构建种子，供核算恢复与测试回到确定的初始状态。"""
+        from app.budget_seed import build_budget_seed
+        from app.services.budget import BudgetService
+        from app.services.budget_constants import ALL_TABLES
+
+        for name in ALL_TABLES:
+            self._tables[name] = []
+        seed_tables = build_budget_seed(BudgetService())
+        for name in ALL_TABLES:
+            self._tables[name] = seed_tables[name]
+        self._budget_seed_loaded = True
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)

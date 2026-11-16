@@ -59,3 +59,33 @@ class ReportService:
         entry["pending"] = target != STATUS_ORDER[-1]
         entry["abnormal"] = action in NEGATIVE_ACTIONS
         return entry, f"分析报告已{action}"
+
+    # ---------------------------------------------------------- 跨模块：科目对账附件
+    def build_budget_attachment(self, entry_id: int, basis_id: int | None = None) -> tuple[dict[str, Any] | None, str]:
+        """科目报告端消费预算执行差异数据集，生成并绑定科目对账附件。
+
+        附件绑定核算依据 id：后续预算更正产生新依据时，旧报告仍指向旧依据快照，
+        使用原来的预算和凭证集合，不被新版本覆盖。
+        """
+        from app.services.budget import BudgetService
+
+        entry = store.find(MODULE, entry_id)
+        if entry is None:
+            return None, f"分析报告 {entry_id} 不存在或已归档"
+        budget_service = BudgetService()
+        try:
+            attachment = budget_service.build_attachment(basis_id=basis_id)
+        except ValueError as exc:
+            return None, str(exc)
+        bound = entry.setdefault("预算对账附件", [])
+        bound.append({
+            "附件编号": attachment["附件编号"],
+            "附件id": attachment["id"],
+            "核算依据编号": attachment["核算依据编号"],
+            "依据id": attachment["依据id"],
+            "标题": attachment["标题"],
+            "生成时间": attachment["生成时间"],
+        })
+        # 数据附件是报告既有字段，同步写入便于列表页展示。
+        entry["数据附件"] = "、".join(item["附件编号"] for item in bound)
+        return attachment, ""
